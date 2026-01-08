@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Founders Factory Snake</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            text-align: center;
+        }
+
+        h1 {
+            color: #4CAF50;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .character-selection {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .selection-step {
+            margin-bottom: 30px;
+        }
+
+        .selection-title {
+            color: white;
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .character-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .character-option {
+            cursor: pointer;
+            border: 3px solid transparent;
+            border-radius: 10px;
+            padding: 10px;
+            transition: all 0.3s;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .character-option:hover {
+            transform: scale(1.1);
+            border-color: #4CAF50;
+        }
+
+        .character-option.selected {
+            border-color: #4CAF50;
+            background: rgba(76, 175, 80, 0.2);
+        }
+
+        .character-option.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .character-option.disabled:hover {
+            transform: none;
+            border-color: transparent;
+        }
+
+        .character-option img {
+            width: 120px;
+            height: 120px;
+            border-radius: 8px;
+            display: block;
+        }
+
+        .character-name {
+            color: white;
+            margin-top: 8px;
+            font-size: 0.9em;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            gap: 30px;
+        }
+
+        .score-box {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px 30px;
+            border-radius: 10px;
+            color: white;
+        }
+
+        .score-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .score-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        canvas {
+            border: 3px solid #4CAF50;
+            background: #000;
+            display: block;
+            margin: 0 auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            width: 600px;
+            height: 600px;
+        }
+
+        .controls {
+            margin-top: 20px;
+            color: white;
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        button {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin-top: 15px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .game-over {
+            color: #ff4444;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .game-area {
+            display: none;
+        }
+
+        .game-area.active {
+            display: block;
+        }
+
+        .character-selection.hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐍 Founders Factory Snake</h1>
+
+        <div class="character-selection" id="characterSelection">
+            <div class="selection-step">
+                <div class="selection-title">Choose Your Snake</div>
+                <div class="character-grid" id="snakeGrid"></div>
+            </div>
+
+            <div class="selection-step">
+                <div class="selection-title">Choose Your Food</div>
+                <div class="character-grid" id="foodGrid"></div>
+            </div>
+
+            <button id="startGameBtn" onclick="startGame()" disabled>Start Game</button>
+        </div>
+
+        <div class="game-area" id="gameArea">
+            <div class="game-info">
+                <div class="score-box">
+                    <div class="score-label">Score</div>
+                    <div class="score-value" id="score">0</div>
+                </div>
+                <div class="score-box">
+                    <div class="score-label">High Score</div>
+                    <div class="score-value" id="highScore">0</div>
+                </div>
+            </div>
+
+            <canvas id="gameCanvas" width="400" height="400"></canvas>
+
+            <div class="controls">
+                Use Arrow Keys to Control
+            </div>
+
+            <div class="game-over" id="gameOver">
+                Game Over!
+            </div>
+
+            <button id="restartBtn" onclick="restartGame()" style="display: none;">Play Again</button>
+            <button onclick="backToSelection()">Change Characters</button>
+        </div>
+    </div>
+
+    <script>
+        const characters = [
+            { id: 'peter', name: 'Peter', image: 'peter.webp' },
+            { id: 'sahil', name: 'Sahil', image: 'sahil.webp' },
+            { id: 'simon', name: 'Simon', image: 'simon.webp' },
+            { id: 'jack', name: 'Jack', image: 'jack.webp' },
+            { id: 'jg', name: 'JG', image: 'jg.webp' },
+            { id: 'daish', name: 'Daish', image: 'daish.webp' },
+            { id: 'alex', name: 'Alex Keith', image: 'alex.webp' },
+            { id: 'bianca', name: 'Bianca', image: 'bianca.webp' },
+            { id: 'claire', name: 'Claire', image: 'claire.webp' },
+            { id: 'damian', name: 'Damian', image: 'damian.webp' },
+            { id: 'david', name: 'David', image: 'david.webp' },
+            { id: 'frank', name: 'Frank', image: 'frank.webp' },
+            { id: 'henry', name: 'Henry', image: 'henry.webp' },
+            { id: 'farah', name: 'Farah', image: 'farah.webp' }
+        ];
+
+        let selectedSnake = null;
+        let selectedFood = null;
+        let snakeImage = new Image();
+        let foodImage = new Image();
+        let imagesLoaded = { snake: false, food: false };
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const highScoreElement = document.getElementById('highScore');
+        const gameOverElement = document.getElementById('gameOver');
+        const restartBtn = document.getElementById('restartBtn');
+
+        const gridSize = 20;
+        const tileCount = canvas.width / gridSize;
+
+        let snake = [{ x: 10, y: 10 }];
+        let dx = 1;
+        let dy = 0;
+        let food = { x: 15, y: 15 };
+        let score = 0;
+        let highScore = localStorage.getItem('snakeHighScore') || 0;
+        let gameRunning = false;
+        let gameSpeed = 100;
+        let nextDx = 1;
+        let nextDy = 0;
+        let snakeLength = 1;
+
+        highScoreElement.textContent = highScore;
+
+        // Initialize character selection
+        function initCharacterSelection() {
+            const snakeGrid = document.getElementById('snakeGrid');
+            const foodGrid = document.getElementById('foodGrid');
+
+            characters.forEach(char => {
+                // Create snake option
+                const snakeOption = createCharacterOption(char, 'snake');
+                snakeGrid.appendChild(snakeOption);
+
+                // Create food option
+                const foodOption = createCharacterOption(char, 'food');
+                foodGrid.appendChild(foodOption);
+            });
+        }
+
+        function createCharacterOption(character, type) {
+            const div = document.createElement('div');
+            div.className = 'character-option';
+            div.dataset.id = character.id;
+            div.dataset.type = type;
+
+            const img = document.createElement('img');
+            img.src = character.image;
+            img.alt = character.name;
+
+            const name = document.createElement('div');
+            name.className = 'character-name';
+            name.textContent = character.name;
+
+            div.appendChild(img);
+            div.appendChild(name);
+
+            div.addEventListener('click', () => selectCharacter(character, type, div));
+
+            return div;
+        }
+
+        function selectCharacter(character, type, element) {
+            if (element.classList.contains('disabled')) return;
+
+            if (type === 'snake') {
+                // Deselect previous snake
+                document.querySelectorAll('.character-option[data-type="snake"]').forEach(el => {
+                    el.classList.remove('selected');
+                });
+
+                selectedSnake = character;
+                element.classList.add('selected');
+
+                // Update food options
+                updateFoodOptions();
+            } else {
+                // Deselect previous food
+                document.querySelectorAll('.character-option[data-type="food"]').forEach(el => {
+                    el.classList.remove('selected');
+                });
+
+                selectedFood = character;
+                element.classList.add('selected');
+            }
+
+            // Enable start button if both selected
+            const startBtn = document.getElementById('startGameBtn');
+            startBtn.disabled = !(selectedSnake && selectedFood);
+        }
+
+        function updateFoodOptions() {
+            document.querySelectorAll('.character-option[data-type="food"]').forEach(el => {
+                if (el.dataset.id === selectedSnake.id) {
+                    el.classList.add('disabled');
+                    if (el.classList.contains('selected')) {
+                        el.classList.remove('selected');
+                        selectedFood = null;
+                    }
+                } else {
+                    el.classList.remove('disabled');
+                }
+            });
+        }
+
+        function startGame() {
+            // Load images
+            snakeImage.src = selectedSnake.image;
+            foodImage.src = selectedFood.image;
+
+            snakeImage.onload = () => {
+                imagesLoaded.snake = true;
+                checkImagesLoaded();
+            };
+
+            foodImage.onload = () => {
+                imagesLoaded.food = true;
+                checkImagesLoaded();
+            };
+        }
+
+        function checkImagesLoaded() {
+            if (imagesLoaded.snake && imagesLoaded.food) {
+                document.getElementById('characterSelection').classList.add('hidden');
+                document.getElementById('gameArea').classList.add('active');
+                gameRunning = true;
+                resetGame();
+                drawGame();
+            }
+        }
+
+        function backToSelection() {
+            gameRunning = false;
+            document.getElementById('characterSelection').classList.remove('hidden');
+            document.getElementById('gameArea').classList.remove('active');
+            gameOverElement.style.display = 'none';
+            restartBtn.style.display = 'none';
+        }
+
+        function resetGame() {
+            snake = [{ x: 10, y: 10 }];
+            dx = 1;
+            dy = 0;
+            nextDx = 1;
+            nextDy = 0;
+            snakeLength = 1;
+            score = 0;
+            scoreElement.textContent = score;
+            placeFood();
+        }
+
+        function drawGame() {
+            if (!gameRunning) return;
+
+            // Update direction
+            dx = nextDx;
+            dy = nextDy;
+
+            // Move snake
+            const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+
+            // Check wall collision
+            if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+                endGame();
+                return;
+            }
+
+            // Check self collision
+            for (let segment of snake) {
+                if (head.x === segment.x && head.y === segment.y) {
+                    endGame();
+                    return;
+                }
+            }
+
+            snake.unshift(head);
+
+            // Check food collision
+            if (head.x === food.x && head.y === food.y) {
+                score++;
+                snakeLength++; // Grow snake by 1 segment per food
+                scoreElement.textContent = score;
+
+                if (score > highScore) {
+                    highScore = score;
+                    highScoreElement.textContent = highScore;
+                    localStorage.setItem('snakeHighScore', highScore);
+                }
+
+                placeFood();
+            } else {
+                // Remove tail segments to maintain length
+                while (snake.length > snakeLength) {
+                    snake.pop();
+                }
+            }
+
+            // Clear canvas
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw snake with face images
+            snake.forEach((segment, index) => {
+                ctx.drawImage(
+                    snakeImage,
+                    segment.x * gridSize,
+                    segment.y * gridSize,
+                    gridSize,
+                    gridSize
+                );
+            });
+
+            // Draw food with face image
+            ctx.drawImage(
+                foodImage,
+                food.x * gridSize,
+                food.y * gridSize,
+                gridSize,
+                gridSize
+            );
+
+            setTimeout(drawGame, gameSpeed);
+        }
+
+        function placeFood() {
+            food.x = Math.floor(Math.random() * tileCount);
+            food.y = Math.floor(Math.random() * tileCount);
+
+            // Make sure food doesn't spawn on snake
+            for (let segment of snake) {
+                if (food.x === segment.x && food.y === segment.y) {
+                    placeFood();
+                    return;
+                }
+            }
+        }
+
+        function endGame() {
+            gameRunning = false;
+            gameOverElement.style.display = 'block';
+            restartBtn.style.display = 'inline-block';
+        }
+
+        function restartGame() {
+            gameRunning = true;
+            gameOverElement.style.display = 'none';
+            restartBtn.style.display = 'none';
+            resetGame();
+            drawGame();
+        }
+
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            if (!gameRunning) return;
+
+            switch (e.key) {
+                case 'ArrowUp':
+                    if (dy === 0) {
+                        nextDx = 0;
+                        nextDy = -1;
+                    }
+                    e.preventDefault();
+                    break;
+                case 'ArrowDown':
+                    if (dy === 0) {
+                        nextDx = 0;
+                        nextDy = 1;
+                    }
+                    e.preventDefault();
+                    break;
+                case 'ArrowLeft':
+                    if (dx === 0) {
+                        nextDx = -1;
+                        nextDy = 0;
+                    }
+                    e.preventDefault();
+                    break;
+                case 'ArrowRight':
+                    if (dx === 0) {
+                        nextDx = 1;
+                        nextDy = 0;
+                    }
+                    e.preventDefault();
+                    break;
+            }
+        });
+
+        // Initialize on page load
+        initCharacterSelection();
+    </script>
+</body>
+</html>
